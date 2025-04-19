@@ -1,11 +1,10 @@
 <!doctype html>
 <html>
 <head>
-<title>Shaka C - Assigment 10</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script><title>React Try It - 1</title>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script><title>Shaka Wordle Redux 2 - Assignment 10</title>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style type="text/css">
 body {
@@ -29,7 +28,7 @@ h1 {
 
 .blank {
      background-color: white;
-     border: 1px solid black;
+     border: 1px solid lightgrey;
      height: 58px;
      width: 58px;
 }
@@ -75,84 +74,131 @@ button {
 .board {
      text-align: center;
 }
+.action-key {
+     font-size: .75em;
+     width: 48px;
+     margin: 0px 2px;
+}
+
+@media (max-width: 500px) {
+     button {
+          width: 30px;
+          height: 50px;
+     }
+}
 </style>
 </head>
-
 <body>
      <div id="myapp"></div>
-
-<script type='text/babel'>
-
-
-const getTileClassName = (letter, idx, solution) => {
-     if(letter === solution[idx]) {
-          return 'correct'
-     } else if (solution.includes(letter)) {
-          return 'misplaced'
-     } else if (letter === '-') {
-          return 'blank'
-     }
-
-     return 'wrong'
-}
-
-function Tile({ letter, evaluation }) {
-     return <div className={`${evaluation} tile`}>{letter}</div>
-}
-
-function GuessRow({ guess, solution }) {
-     const guessArr = guess.split("")
-
-     return <div className="guess-row">
-      {guessArr.map((letter, idx) => {
-          const evaluation = getTileClassName(letter, idx, solution)
-          return <Tile key={idx} letter={letter !== '-' ? letter : ''} evaluation={evaluation} />
-     })}
-     </div>
-}
-
-function Guesses({ solution, guesses }) {
-     return <div className="guesses">
-               {guesses.map((guess, idx) => <GuessRow key={idx} guess={guess} solution={solution} />)}
-          </div>
-}
-
-function KeyboardKey({ keyLetter, idx, solution }) {
-     const evaluation = getTileClassName(keyLetter, idx, solution)
-     if(keyLetter == 8) {
-          return <br />
-     } else if(keyLetter == 1) {
-          keyLetter = 'Ent'
-     } else if (keyLetter == 2) {
-          keyLetter = 'Del'
-     }
-     return <button className={evaluation}>{keyLetter}</button>
-
-}
-
-function Keyboard({ solution, guesses }) {
-     const keyboardKeys = "qwertyuiop8asdfghjkl81zxcvbnm2".split("")
-     return <div className="keyboard">
-          {keyboardKeys.map((keyLetter, idx) => <KeyboardKey keyLetter={keyLetter} key={idx} solution={solution} />)}
-     </div>
-
-}
-
-function BoardGame({ title, solution }) {
+     <script type='text/babel'>
+     const solution = "moody"
      const blank = "-----"
      const guesses = ["might", "flood", "stray", blank, blank]
-     return (
-          <div className="board">
-               <h1>{title}</h1>
-               <Guesses solution={solution} guesses={guesses} />
-               <Keyboard solution={solution} guesses={guesses} />
-          </div>
-     )
-}
+     const progressEvaluation = () => {
+          let evals = {
+               correct: [],
+               misplaced: [],
+               wrong: [],
+          }
+          for(let i = 0; i < guesses.length; i++) {
+               let guessArr = guesses[i].split("")
+               for (let j = 0; j < guessArr.length; j++) {
+                    if(guessArr[j] === solution[j]) {
+                         evals.correct.push(guessArr[j])
+                    } else if (solution.includes(guessArr[j])) {
+                         evals.misplaced.push(guessArr[j])
+                    } else {
+                         evals.wrong.push(guessArr[j])
+                    }
 
-var board = <BoardGame title="Wordle" solution="moody" />
-ReactDOM.render(board, myapp);     
-</script> 
+               }
+          }
+          console.log('evals', evals)
+          return evals
+     }
+
+     const progress = progressEvaluation()
+     const getTileClassName = (letter, idx) => {
+          if(letter === solution[idx]) {
+               return 'correct'
+          } else if (solution.includes(letter)) {
+               return 'misplaced'
+          } else if (letter === '-') {
+               return 'blank'
+          }
+
+          return 'wrong'
+     }
+
+     function Tile({ letter, evaluation }) {
+          return <div className={`${evaluation} tile`}>{letter}</div>
+     }
+
+     function GuessRow({ guess, solution }) {
+          const guessArr = guess.split("")
+          return <div className="guess-row">
+           {guessArr.map((letter, idx) => {
+               const evaluation = getTileClassName(letter, idx)
+               return <Tile key={idx} letter={letter !== '-' ? letter : ''} evaluation={evaluation} />
+          })}
+          </div>
+     }
+
+     function Guesses({ solution, guesses }) {
+          return (<div className="guesses">
+                    {guesses.map((guess, idx) => <GuessRow key={idx} guess={guess} solution={solution} />)}
+               </div>)
+     }
+
+     function KeyboardKey({ keyLetter, evaluation, solution }) {
+          let isActionKey = false
+          if(keyLetter == 8) {
+               return <br />
+          } else if(keyLetter == 1) {
+               keyLetter = 'Ent'
+               isActionKey = true
+          } else if (keyLetter == 2) {
+               keyLetter = 'Del'
+               isActionKey = true
+          }
+
+          return <button className={`${evaluation} ${isActionKey ? 'action-key' : ''}`}>{keyLetter}</button>
+
+     }
+
+     function Keyboard() {
+          const keyboardKeys = "qwertyuiop8asdfghjkl81zxcvbnm2".split("")
+          return <div className="keyboard">
+               {
+                    keyboardKeys.map((keyLetter, idx) => {
+                         let evaluation = ''
+                         if(progress.correct.includes(keyLetter)) {
+                              evaluation = 'correct'
+                         } else if (progress.misplaced.includes(keyLetter)) {
+                              evaluation = 'misplaced'
+                         } else if (progress.wrong.includes(keyLetter)) {
+                              evaluation = 'wrong'
+                         }
+                         return (<KeyboardKey keyLetter={keyLetter} key={idx}  evaluation={evaluation} solution={solution} />)
+                    }
+               )}
+          </div>
+
+     }
+
+     function BoardGame({ title, solution }) {
+          return (
+               <div className="board">
+                    <h1>{title}</h1>
+                    <Guesses solution={solution} guesses={guesses} />
+                    <Keyboard solution={solution} guesses={guesses} />
+               </div>
+          )
+     }
+
+     var board = <BoardGame title="Wordle" solution="moody" />
+     ReactDOM.render(board, myapp);     
+     </script> 
 </body>
 </html>
      
