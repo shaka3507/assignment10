@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Shaka Wordle Redux 2</title>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script><title>Shaka Wordle Redux 2 - Assignment 10</title>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style type="text/css">
 body {
@@ -75,7 +76,7 @@ button {
      text-align: center;
 }
 .action-key {
-     font-size: .75em;
+     font-size: .66em;
      width: 48px;
      margin: 0px 2px;
 }
@@ -91,21 +92,29 @@ button {
 <body>
      <div id="myapp"></div>
      <script type='text/babel'>
-     const solution = "moody"
-     const blank = "-----"
-     const guesses = ["might", "flood", "stray", blank, blank]
+
+     // setting up game 'state'
+     // setting it up here allows me to use it in multiple components without always passing it in as a prop
+     const GAME_GUESS_LIMIT = 6
+     const game = {
+          solution: "moody",
+          guesses: ["might", "flood", "stray"],
+          progress: {}
+     }
+
      const progressEvaluation = () => {
+          const { guesses } = game
           let evals = {
                correct: [],
                misplaced: [],
                wrong: [],
           }
-          for(let i = 0; i < guesses.length; i++) {
+          for(let i = 0; i < game.guesses.length; i++) {
                let guessArr = guesses[i].split("")
                for (let j = 0; j < guessArr.length; j++) {
-                    if(guessArr[j] === solution[j]) {
+                    if(guessArr[j] === game.solution[j]) {
                          evals.correct.push(guessArr[j])
-                    } else if (solution.includes(guessArr[j])) {
+                    } else if (game.solution.includes(guessArr[j])) {
                          evals.misplaced.push(guessArr[j])
                     } else {
                          evals.wrong.push(guessArr[j])
@@ -113,15 +122,17 @@ button {
 
                }
           }
-          console.log('evals', evals)
           return evals
      }
 
-     const progress = progressEvaluation()
+     game.progress = progressEvaluation()
+
+
+     // helper function
      const getTileClassName = (letter, idx) => {
-          if(letter === solution[idx]) {
+          if(letter === game.solution[idx]) {
                return 'correct'
-          } else if (solution.includes(letter)) {
+          } else if (game.solution.includes(letter)) {
                return 'misplaced'
           } else if (letter === '-') {
                return 'blank'
@@ -130,11 +141,13 @@ button {
           return 'wrong'
      }
 
+
+     // components
      function Tile({ letter, evaluation }) {
           return <div className={`${evaluation} tile`}>{letter}</div>
      }
 
-     function GuessRow({ guess, solution }) {
+     function GuessRow({ guess }) {
           const guessArr = guess.split("")
           return <div className="guess-row">
            {guessArr.map((letter, idx) => {
@@ -144,21 +157,25 @@ button {
           </div>
      }
 
-     function Guesses({ solution, guesses }) {
+     function Guesses() {
+          let newArr = new Array(GAME_GUESS_LIMIT - game.guesses.length) // make unused guess array
+          newArr.fill("-----") // replace those 'blanks', with ----- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/fill
+          // spread operator to help copy into new array: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax
+          const guessesWithUnused = [...game.guesses, ...newArr] // combine arrays for final display
           return (<div className="guesses">
-                    {guesses.map((guess, idx) => <GuessRow key={idx} guess={guess} solution={solution} />)}
+                    {guessesWithUnused.map((guess, idx) => <GuessRow key={idx} guess={guess} />)}
                </div>)
      }
 
-     function KeyboardKey({ keyLetter, evaluation, solution }) {
+     function KeyboardKey({ keyLetter, evaluation }) {
           let isActionKey = false
           if(keyLetter == 8) {
                return <br />
           } else if(keyLetter == 1) {
-               keyLetter = 'Ent'
+               keyLetter = 'Enter'
                isActionKey = true
           } else if (keyLetter == 2) {
-               keyLetter = 'Del'
+               keyLetter = 'Delete'
                isActionKey = true
           }
 
@@ -167,6 +184,7 @@ button {
      }
 
      function Keyboard() {
+          const { progress } = game
           const keyboardKeys = "qwertyuiop8asdfghjkl81zxcvbnm2".split("")
           return <div className="keyboard">
                {
@@ -179,24 +197,23 @@ button {
                          } else if (progress.wrong.includes(keyLetter)) {
                               evaluation = 'wrong'
                          }
-                         return (<KeyboardKey keyLetter={keyLetter} key={idx}  evaluation={evaluation} solution={solution} />)
+                         return (<KeyboardKey keyLetter={keyLetter} key={idx}  evaluation={evaluation} />)
                     }
                )}
           </div>
-
      }
 
-     function BoardGame({ title, solution }) {
+     function BoardGame() {
           return (
                <div className="board">
-                    <h1>{title}</h1>
-                    <Guesses solution={solution} guesses={guesses} />
-                    <Keyboard solution={solution} guesses={guesses} />
+                    <h1>Wordle</h1>
+                    <Guesses />
+                    <Keyboard />
                </div>
           )
      }
 
-     var board = <BoardGame title="Wordle" solution="moody" />
+     var board = <BoardGame />
      ReactDOM.render(board, myapp);     
      </script> 
 </body>
